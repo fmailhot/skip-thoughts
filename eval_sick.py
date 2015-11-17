@@ -21,11 +21,11 @@ def evaluate(model, seed=1234, evaltest=False):
     print 'Preparing data...'
     train, dev, test, scores = load_data()
     train[0], train[1], scores[0] = shuffle(train[0], train[1], scores[0], random_state=seed)
-    
+
     print 'Computing training skipthoughts...'
     trainA = skipthoughts.encode(model, train[0], verbose=False, use_eos=True)
     trainB = skipthoughts.encode(model, train[1], verbose=False, use_eos=True)
-    
+
     print 'Computing development skipthoughts...'
     devA = skipthoughts.encode(model, dev[0], verbose=False, use_eos=True)
     devB = skipthoughts.encode(model, dev[1], verbose=False, use_eos=True)
@@ -53,7 +53,7 @@ def evaluate(model, seed=1234, evaltest=False):
         testF = np.c_[np.abs(testA - testB), testA * testB]
 
         print 'Evaluating...'
-        r = np.arange(1,6)
+        r = np.arange(1, 6)
         yhat = np.dot(bestlrmodel.predict_proba(testF, verbose=2), r)
         pr = pearsonr(yhat, scores[2])[0]
         sr = spearmanr(yhat, scores[2])[0]
@@ -70,7 +70,7 @@ def prepare_model(ninputs=9600, nclass=5):
     Set up and compile the model architecture (Logistic regression)
     """
     lrmodel = Sequential()
-    lrmodel.add(Dense(ninputs, nclass))
+    lrmodel.add(Dense(nclass, input_dim=ninputs))
     lrmodel.add(Activation('softmax'))
     lrmodel.compile(loss='categorical_crossentropy', optimizer='adam')
     return lrmodel
@@ -82,8 +82,8 @@ def train_model(lrmodel, X, Y, devX, devY, devscores):
     """
     done = False
     best = -1.0
-    r = np.arange(1,6)
-    
+    r = np.arange(1, 6)
+
     while not done:
         # Every 100 epochs, check Pearson on development set
         lrmodel.fit(X, Y, verbose=2, shuffle=False, validation_data=(devX, devY))
@@ -100,7 +100,7 @@ def train_model(lrmodel, X, Y, devX, devY, devscores):
     score = pearsonr(yhat, devscores)[0]
     print 'Dev Pearson: ' + str(score)
     return bestlrmodel
-    
+
 
 def encode_labels(labels, nclass=5):
     """
@@ -149,3 +149,10 @@ def load_data(loc='./data/'):
     return [trainA[1:], trainB[1:]], [devA[1:], devB[1:]], [testA[1:], testB[1:]], [trainS, devS, testS]
 
 
+def main():
+    model = skipthoughts.load_model()
+    evaluate(model, evaltest=True)
+
+
+if __name__ == '__main__':
+    main()
